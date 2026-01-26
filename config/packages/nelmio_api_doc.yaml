@@ -1,6 +1,6 @@
 nelmio_api_doc:
   documentation:
     info:
-      title: Backend Demo
+      title: Hot on GitHub API
       description: GitHub popular repositories discovery API
       version: 1.0.0
