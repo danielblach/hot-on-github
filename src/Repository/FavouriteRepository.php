@@ -2,31 +2,55 @@
 
 namespace App\Repository;
 
+use Psr\Cache\CacheItemPoolInterface;
+
 class FavouriteRepository
 {
-    /** @var array<int, bool> */
-    private array $favourites = [];
+    private const CACHE_KEY = 'favourites';
+
+    public function __construct(
+        private CacheItemPoolInterface $cache
+    ) {}
 
     public function add(int $repoId): void
     {
-        $this->favourites[$repoId] = true;
+        $item = $this->cache->getItem(self::CACHE_KEY);
+        $data = $item->isHit() ? $item->get() : [];
+
+        $data[$repoId] = true;
+
+        $item->set($data);
+        $this->cache->save($item);
     }
 
     public function remove(int $repoId): void
     {
-        unset($this->favourites[$repoId]);
+        $item = $this->cache->getItem(self::CACHE_KEY);
+        if (!$item->isHit()) {
+            return;
+        }
+
+        $data = $item->get();
+        unset($data[$repoId]);
+
+        $item->set($data);
+        $this->cache->save($item);
+    }
+
+    public function all(): array
+    {
+        $item = $this->cache->getItem(self::CACHE_KEY);
+        return $item->isHit() ? array_keys($item->get()) : [];
     }
 
     public function isFavourite(int $repoId): bool
     {
-        return isset($this->favourites[$repoId]);
-    }
+        $item = $this->cache->getItem(self::CACHE_KEY);
+        if (!$item->isHit()) {
+            return false;
+        }
 
-    /**
-     * @return int[]
-     */
-    public function all(): array
-    {
-        return array_keys($this->favourites);
+        $data = $item->get();
+        return isset($data[$repoId]);
     }
 }
